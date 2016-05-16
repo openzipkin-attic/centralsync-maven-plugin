@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2015-2016 The OpenZipkin Authors
+    Copyright 2016 The OpenZipkin Authors
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
     in compliance with the License. You may obtain a copy of the License at
@@ -14,24 +14,89 @@
     the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <parent>
-    <artifactId>parent</artifactId>
-    <groupId>io.zipkin.java</groupId>
-    <version>0.20.2-SNAPSHOT</version>
-  </parent>
-
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
+  <groupId>io.zipkin.centralsync-maven-plugin</groupId>
   <artifactId>centralsync-maven-plugin</artifactId>
   <packaging>maven-plugin</packaging>
+  <version>0.1.0-SNAPSHOT</version>
+
   <name>Central Sync Maven Plugin</name>
   <description>Maven plugin that syncs a Bintray project to Maven Central</description>
-  <url>http://maven.apache.org</url>
+  <url>https://github.com/openzipkin/centralsync-maven-plugin</url>
+  <inceptionYear>2016</inceptionYear>
+
+  <organization>
+    <name>OpenZipkin</name>
+    <url>http://zipkin.io/</url>
+  </organization>
+
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <scm>
+    <url>https://github.com/openzipkin/centralsync-maven-plugin</url>
+    <connection>scm:git:https://github.com/openzipkin/centralsync-maven-plugin.git</connection>
+    <developerConnection>scm:git:https://github.com/openzipkin/centralsync-maven-plugin.git
+    </developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+
+  <developers>
+    <developer>
+      <id>adriancole</id>
+      <name>Adrian Cole</name>
+      <email>acole@pivotal.io</email>
+    </developer>
+    <developer>
+      <id>abesto</id>
+      <name>Zoltán Nagy</name>
+      <email>abesto@abesto.net</email>
+    </developer>
+  </developers>
+
+  <distributionManagement>
+    <repository>
+      <id>bintray</id>
+      <url>https://api.bintray.com/maven/openzipkin/maven/centralsync-maven-plugin/;publish=1</url>
+    </repository>
+    <snapshotRepository>
+      <id>jfrog-snapshots</id>
+      <url>http://oss.jfrog.org/artifactory/oss-snapshot-local</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+  <issueManagement>
+    <system>Github</system>
+    <url>https://github.com/openzipkin/centralsync-maven-plugin/issues</url>
+  </issueManagement>
 
   <properties>
-    <!-- TODO: sync with the version from the maven wrapper -->
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.build.resourceEncoding>UTF-8</project.build.resourceEncoding>
+
     <maven.version>3.3.9</maven.version>
-    <main.basedir>${project.basedir}/..</main.basedir>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+
+    <okhttp.version>3.2.0</okhttp.version>
+
+    <junit.version>4.12</junit.version>
+    <assertj.version>3.3.0</assertj.version>
+
+    <maven-plugin.version>0.3.3</maven-plugin.version>
+    <maven-install-plugin.version>2.5.2</maven-install-plugin.version>
+    <maven-source-plugin.version>3.0.0</maven-source-plugin.version>
+    <maven-javadoc-plugin.version>2.10.3</maven-javadoc-plugin.version>
+    <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
   </properties>
 
   <dependencies>
@@ -50,6 +115,7 @@
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>okhttp</artifactId>
+      <version>${okhttp.version}</version>
     </dependency>
 
     <dependency>
@@ -60,9 +126,102 @@
     </dependency>
 
     <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <version>${assertj.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>mockwebserver</artifactId>
+      <version>${okhttp.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <!-- mvn -N io.takari:maven:wrapper -Dmaven=3.3.9 -->
+        <plugin>
+          <groupId>io.takari</groupId>
+          <artifactId>maven</artifactId>
+          <version>${maven-plugin.version}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
+    <plugins>
+
+      <!-- Ensures checksums are added to published jars -->
+      <plugin>
+        <artifactId>maven-install-plugin</artifactId>
+        <version>${maven-install-plugin.version}</version>
+        <configuration>
+          <createChecksum>true</createChecksum>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>${maven-release-plugin.version}</version>
+        <configuration>
+          <useReleaseProfile>false</useReleaseProfile>
+          <releaseProfiles>release</releaseProfiles>
+          <!-- to match zipkin-scala (openzipkin/zipkin) -->
+          <tagNameFormat>@{project.version}</tagNameFormat>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <!-- Creates source jar -->
+          <plugin>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>${maven-source-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+
+          <!-- Creates javadoc jar -->
+          <plugin>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>${maven-javadoc-plugin.version}</version>
+            <configuration>
+              <failOnError>false</failOnError>
+              <additionalparam>-Xdoclint:none</additionalparam>
+            </configuration>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+                <phase>package</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
