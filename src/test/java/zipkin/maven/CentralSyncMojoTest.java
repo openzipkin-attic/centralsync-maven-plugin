@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 The OpenZipkin Authors
+ * Copyright 2016 The OpenZipkin Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -41,6 +41,7 @@ public class CentralSyncMojoTest {
   public void setupCentralSyncMojo() {
     mojo = new CentralSyncMojo();
     mojo.version = "1.1";
+    mojo.packageName = "zipkin-java";
     mojo.settings = new Settings();
     mojo.settings.addServer(new Server());
     mojo.baseUrl = server.url("").toString();
