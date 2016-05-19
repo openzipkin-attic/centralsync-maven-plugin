@@ -4,7 +4,7 @@ Central Sync Maven Plugin
 This is a Maven plugin that syncs a Bintray project to Maven Central. It
 defaults to the correct settings for the OpenZipkin organization.
 
-=== Setup
+### Setup
 First, you'll need add `sonatype` and `bintray` servers to your settings.xml file:
 
 ```xml
@@ -35,6 +35,7 @@ package you are deploying:
 </plugin>
 ```
 
+### Dry run
 Next, dry-run your configuration to ensure there are no problems.
 
 ```bash
