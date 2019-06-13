@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2016 The OpenZipkin Authors
+    Copyright 2016-2019 The OpenZipkin Authors
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
     in compliance with the License. You may obtain a copy of the License at
@@ -29,13 +29,13 @@
 
   <organization>
     <name>OpenZipkin</name>
-    <url>http://zipkin.io/</url>
+    <url>https://zipkin.io/</url>
   </organization>
 
   <licenses>
     <license>
       <name>The Apache Software License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
       <distribution>repo</distribution>
     </license>
   </licenses>
@@ -48,16 +48,12 @@
     <tag>HEAD</tag>
   </scm>
 
+  <!-- Developer section is needed for Maven Central, but doesn't need to include each person -->
   <developers>
     <developer>
-      <id>adriancole</id>
-      <name>Adrian Cole</name>
-      <email>acole@pivotal.io</email>
-    </developer>
-    <developer>
-      <id>abesto</id>
-      <name>Zoltán Nagy</name>
-      <email>abesto@abesto.net</email>
+      <id>openzipkin</id>
+      <name>OpenZipkin Gitter</name>
+      <url>https://gitter.im/openzipkin/zipkin</url>
     </developer>
   </developers>
 
@@ -68,7 +64,7 @@
     </repository>
     <snapshotRepository>
       <id>jfrog-snapshots</id>
-      <url>http://oss.jfrog.org/artifactory/oss-snapshot-local</url>
+      <url>https://oss.jfrog.org/artifactory/oss-snapshot-local</url>
     </snapshotRepository>
   </distributionManagement>
 
@@ -81,20 +77,21 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.build.resourceEncoding>UTF-8</project.build.resourceEncoding>
 
-    <maven.version>3.3.9</maven.version>
+    <maven.version>3.6.1</maven.version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
 
-    <okhttp.version>3.2.0</okhttp.version>
+    <okhttp.version>3.4.2</okhttp.version>
 
     <junit.version>4.12</junit.version>
     <assertj.version>3.3.0</assertj.version>
 
     <maven-plugin.version>0.3.3</maven-plugin.version>
-    <maven-install-plugin.version>2.5.2</maven-install-plugin.version>
-    <maven-source-plugin.version>3.0.0</maven-source-plugin.version>
-    <maven-javadoc-plugin.version>2.10.3</maven-javadoc-plugin.version>
+    <maven-install-plugin.version>3.0.0-M1</maven-install-plugin.version>
+    <maven-source-plugin.version>3.1.0</maven-source-plugin.version>
+    <maven-javadoc-plugin.version>3.1.0</maven-javadoc-plugin.version>
     <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
+    <maven-deploy-plugin.version>3.0.0-M1</maven-deploy-plugin.version>
   </properties>
 
   <dependencies>
@@ -119,7 +116,7 @@
     <dependency>
       <groupId>org.apache.maven.plugin-tools</groupId>
       <artifactId>maven-plugin-annotations</artifactId>
-      <version>3.4</version>
+      <version>3.6.0</version>
       <scope>provided</scope>
     </dependency>
 
@@ -148,37 +145,38 @@
   <build>
     <pluginManagement>
       <plugins>
-        <!-- mvn -N io.takari:maven:wrapper -Dmaven=3.3.9 -->
+        <!-- mvn -N io.takari:maven:wrapper generates the ./mvnw script -->
         <plugin>
           <groupId>io.takari</groupId>
           <artifactId>maven</artifactId>
-          <version>${maven-plugin.version}</version>
+          <version>0.7.6</version>
+          <configuration>
+            <maven>${maven.version}</maven>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>${maven-deploy-plugin.version}</version>
+        </plugin>
+
+        <plugin>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>${maven-deploy-plugin.version}</version>
+        </plugin>
+
+        <plugin>
+          <artifactId>maven-release-plugin</artifactId>
+          <version>${maven-release-plugin.version}</version>
+          <configuration>
+            <useReleaseProfile>false</useReleaseProfile>
+            <releaseProfiles>release</releaseProfiles>
+            <!-- to match zipkin-scala (openzipkin/zipkin) -->
+            <tagNameFormat>@{project.version}</tagNameFormat>
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>
-
-    <plugins>
-
-      <!-- Ensures checksums are added to published jars -->
-      <plugin>
-        <artifactId>maven-install-plugin</artifactId>
-        <version>${maven-install-plugin.version}</version>
-        <configuration>
-          <createChecksum>true</createChecksum>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-release-plugin</artifactId>
-        <version>${maven-release-plugin.version}</version>
-        <configuration>
-          <useReleaseProfile>false</useReleaseProfile>
-          <releaseProfiles>release</releaseProfiles>
-          <!-- to match zipkin-scala (openzipkin/zipkin) -->
-          <tagNameFormat>@{project.version}</tagNameFormat>
-        </configuration>
-      </plugin>
-    </plugins>
   </build>
 
   <profiles>
@@ -199,14 +197,14 @@
               </execution>
             </executions>
           </plugin>
-
           <!-- Creates javadoc jar -->
           <plugin>
             <artifactId>maven-javadoc-plugin</artifactId>
             <version>${maven-javadoc-plugin.version}</version>
             <configuration>
               <failOnError>false</failOnError>
-              <additionalparam>-Xdoclint:none</additionalparam>
+              <!-- hush pedantic warnings: we don't put param and return on everything! -->
+              <doclint>none</doclint>
             </configuration>
             <executions>
               <execution>

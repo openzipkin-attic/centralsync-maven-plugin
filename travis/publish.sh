@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright 2016 The OpenZipkin Authors
+# Copyright 2018-2019 The OpenZipkin Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
@@ -12,9 +12,6 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 #
-
-## This is similar to the script in openzipkin/zipkin-java except it doesn't try to sync to maven
-## central automatically.
 
 set -euo pipefail
 set -x
@@ -75,6 +72,20 @@ check_release_tag() {
     fi
 }
 
+print_project_version() {
+  ./mvnw help:evaluate -N -Dexpression=project.version|sed -n '/^[0-9]/p'
+}
+
+is_release_commit() {
+  project_version="$(print_project_version)"
+  if [[ "$project_version" =~ ^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$ ]]; then
+    echo "Build started by release commit $project_version. Will synchronize to maven central."
+    return 0
+  else
+    return 1
+  fi
+}
+
 release_version() {
     echo "${TRAVIS_TAG}" | sed 's/^release-//'
 }
@@ -102,7 +113,8 @@ if ! is_pull_request && build_started_by_tag; then
   check_release_tag
 fi
 
-./mvnw install -nsu
+# skip license on travis due to #1512
+./mvnw install -nsu -Dlicense.skip=true
 
 # If we are on a pull request, our only job is to run tests, which happened above via ./mvnw install
 if is_pull_request; then
@@ -113,9 +125,14 @@ if is_pull_request; then
 elif is_travis_branch_master; then
   ./mvnw --batch-mode -s ./.settings.xml -Prelease -nsu -DskipTests deploy
 
+  # If the deployment succeeded, sync it to Maven Central. Note: this needs to be done once per project, not module, hence -N
+  if is_release_commit; then
+    ./mvnw --batch-mode -s ./.settings.xml -nsu -N io.zipkin.centralsync-maven-plugin:centralsync-maven-plugin:sync
+  fi
+
 # If we are on a release tag, the following will update any version references and push a version tag for deployment.
 elif build_started_by_tag; then
   safe_checkout_master
-  ./mvnw --batch-mode -s ./.settings.xml -Prelease -nsu -DreleaseVersion="$(release_version)" -Darguments="-DskipTests" release:prepare
+  # skip license on travis due to #1512
+  ./mvnw --batch-mode -s ./.settings.xml -Prelease -nsu -DreleaseVersion="$(release_version)" -Darguments="-DskipTests -Dlicense.skip=true" release:prepare
 fi
-
