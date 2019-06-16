@@ -175,6 +175,15 @@
             <tagNameFormat>@{project.version}</tagNameFormat>
           </configuration>
         </plugin>
+
+        <plugin>
+          <groupId>io.zipkin.centralsync-maven-plugin</groupId>
+          <artifactId>centralsync-maven-plugin</artifactId>
+          <version>0.1.1</version>
+          <configuration>
+            <packageName>centralsync-maven-plugin</packageName>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
   </build>
